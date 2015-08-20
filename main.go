@@ -13,7 +13,7 @@ import (
 
 const (
 	bits = 32
-	rate = 44100
+	rate = 8000
 )
 
 //directly use byte for optimization
@@ -84,6 +84,21 @@ func main() {
 	writeWavFile(morseCode)
 }
 
+func translateMorseStringTo(morseCode string) []int32 {
+	var freqSlice []int32
+
+	for _, code := range morseCode {
+		if code == "." {
+			freqSlice = append(freqSlice, 1, 0)
+		} else if code == "-" {
+			freqSlice = append(freqSlice, 1, 1, 1, 0)
+		} else {
+			freqSlice = append(freqSlice, 0)
+		}
+	}
+	return freqSlice
+}
+
 func translateToMorse(line string) string {
 
 	var morseCode string
@@ -113,10 +128,10 @@ func writeWavFile(morseCode string) {
 	checkErr(err)
 	defer writer.Close()
 
-	var freq float64
-	freq = 0.1
+	var freq float32
+	freq = 0.5
 
-	for n := 0; n < 50*rate; n += 1 {
+	for n := 0; n < 10*rate; n += 1 {
 		y := int32(0.8 * math.Pow(2, bits-1) * math.Sin(freq*float64(n)))
 		err = writer.WriteInt32(y)
 		checkErr(err)
