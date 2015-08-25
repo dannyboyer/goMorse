@@ -18,6 +18,9 @@ const (
 
 //directly use byte for optimization
 var m = map[string]string{
+	"-": "-....-",
+	",": "--..--",
+	".": ".-.-.-",
 	" ": "/",
 	"A": ".-",
 	"B": "-...",
@@ -81,22 +84,6 @@ func main() {
 	}
 
 	fmt.Println(morseCode)
-	writeWavFile(morseCode)
-}
-
-func translateMorseStringTo(morseCode string) []int32 {
-	var freqSlice []int32
-
-	for _, code := range morseCode {
-		if code == "." {
-			freqSlice = append(freqSlice, 1, 0)
-		} else if code == "-" {
-			freqSlice = append(freqSlice, 1, 1, 1, 0)
-		} else {
-			freqSlice = append(freqSlice, 0)
-		}
-	}
-	return freqSlice
 }
 
 func translateToMorse(line string) string {
@@ -112,7 +99,22 @@ func translateToMorse(line string) string {
 	return morseCode
 }
 
-func writeWavFile(morseCode string) {
+func translateToFreq(morseCode string) []int32 {
+
+	var freqSlice []int32
+
+	for _, code := range morseCode {
+		if code == ' ' {
+			freqSlice = append(freqSlice, 0)
+		} else {
+			freqSlice = append(freqSlice, 1)
+		}
+	}
+
+	return freqSlice
+}
+
+func writeWavFile(morseCode []int32) {
 
 	wavOut, err := os.Create("output.wav")
 	checkErr(err)
@@ -128,13 +130,16 @@ func writeWavFile(morseCode string) {
 	checkErr(err)
 	defer writer.Close()
 
-	var freq float32
-	freq = 0.5
+	var freq float64 = 0.5
 
-	for n := 0; n < 10*rate; n += 1 {
-		y := int32(0.8 * math.Pow(2, bits-1) * math.Sin(freq*float64(n)))
-		err = writer.WriteInt32(y)
-		checkErr(err)
+	for n := 0; n < len(morseCode); n += 1 {
+
+		y := int32(0.8 * math.Pow(2, bits-1) * math.Sin(float64(morseCode[n])*freq*float64(n)))
+
+		for n := 0; n < 4000; n += 1 {
+			err = writer.WriteInt32(y)
+			checkErr(err)
+		}
 	}
 }
 
