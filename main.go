@@ -4,60 +4,68 @@ import (
 	"bufio"
 	"fmt"
 	"log"
-	"math"
 	"os"
 	"strings"
-
-	"github.com/cryptix/wav"
 )
 
 const (
-	bits = 32
-	rate = 8000
+	Wpm  = 20.0        //words per minutes
+	Tone = 900         //frequency in Hertz
+	Sps  = 44100       //samples per seconds
+	Path = "morse.wav" //filepath
 )
 
-//directly use byte for optimization
+//directly compare byte for optimization
 var m = map[string]string{
-	"-": "-....-",
-	",": "--..--",
-	".": ".-.-.-",
-	" ": "/",
-	"A": ".-",
-	"B": "-...",
-	"C": "-.-.",
-	"D": "-..",
-	"E": ".",
-	"F": "..-.",
-	"G": "--.",
-	"H": "....",
-	"I": "..",
-	"J": ".---",
-	"K": "-.-",
-	"L": ".-..",
-	"M": "--",
-	"N": "-.",
-	"O": "---",
-	"P": ".--.",
-	"Q": "--.-",
-	"R": ".-.",
-	"S": "...",
-	"T": "-",
-	"U": "..-",
-	"V": "...-",
-	"W": ".--",
-	"X": "-..-",
-	"Y": "-.--",
-	"Z": "--..",
-	"0": "-----",
-	"1": ".----",
-	"2": "..---",
-	"3": "...--",
-	"4": "....-",
-	"5": ".....",
-	"6": "-....",
-	"7": "--...",
-	"8": "---..",
-	"9": "----.",
+	":":  "---...",
+	"?":  "..--..",
+	"'":  ".----.",
+	"/":  "-..-.",
+	"(":  "-.--.-",
+	")":  "-.--.-",
+	"\"": ".-..-.",
+	"@":  ".--.-.",
+	"=":  "-...-",
+	"-":  "-....-",
+	",":  "--..--",
+	".":  ".-.-.-",
+	" ":  "/",
+	"A":  ".-",
+	"B":  "-...",
+	"C":  "-.-.",
+	"D":  "-..",
+	"E":  ".",
+	"F":  "..-.",
+	"G":  "--.",
+	"H":  "....",
+	"I":  "..",
+	"J":  ".---",
+	"K":  "-.-",
+	"L":  ".-..",
+	"M":  "--",
+	"N":  "-.",
+	"O":  "---",
+	"P":  ".--.",
+	"Q":  "--.-",
+	"R":  ".-.",
+	"S":  "...",
+	"T":  "-",
+	"U":  "..-",
+	"V":  "...-",
+	"W":  ".--",
+	"X":  "-..-",
+	"Y":  "-.--",
+	"Z":  "--..",
+	"0":  "-----",
+	"1":  ".----",
+	"2":  "..---",
+	"3":  "...--",
+	"4":  "....-",
+	"5":  ".....",
+	"6":  "-....",
+	"7":  "--...",
+	"8":  "---..",
+	"9":  "----.",
 }
 
 func main() {
@@ -73,78 +81,31 @@ func main() {
 
 	scanner := bufio.NewScanner(inputFile)
 
-	var morseCode string
+	var message string
 
 	for scanner.Scan() {
-		morseCode += translateToMorse(scanner.Text())
+		message += scanner.Text()
 	}
 
 	if err := scanner.Err(); err != nil {
 		log.Fatal(scanner.Err())
 	}
 
-	fmt.Println(morseCode)
+	morseCodeChannel := make(chan string)
+
+	go translateRuneToMorse(message, morseCodeChannel)
+
+	for i := range morseCodeChannel {
+		fmt.Print(i)
+	}
 }
 
-func translateToMorse(line string) string {
-
-	var morseCode string
-	for _, r := range line {
+func translateRuneToMorse(input string, output chan string) {
+	for _, r := range input {
 		char := strings.ToUpper(string(r))
 		if val, ok := m[char]; ok {
-			morseCode += val + " "
+			output <- val + " "
 		}
 	}
-
-	return morseCode
-}
-
-func translateToFreq(morseCode string) []int32 {
-
-	var freqSlice []int32
-
-	for _, code := range morseCode {
-		if code == ' ' {
-			freqSlice = append(freqSlice, 0)
-		} else {
-			freqSlice = append(freqSlice, 1)
-		}
-	}
-
-	return freqSlice
-}
-
-func writeWavFile(morseCode []int32) {
-
-	wavOut, err := os.Create("output.wav")
-	checkErr(err)
-	defer wavOut.Close()
-
-	meta := wav.File{
-		Channels:        1,
-		SampleRate:      rate,
-		SignificantBits: bits,
-	}
-
-	writer, err := meta.NewWriter(wavOut)
-	checkErr(err)
-	defer writer.Close()
-
-	var freq float64 = 0.5
-
-	for n := 0; n < len(morseCode); n += 1 {
-
-		y := int32(0.8 * math.Pow(2, bits-1) * math.Sin(float64(morseCode[n])*freq*float64(n)))
-
-		for n := 0; n < 4000; n += 1 {
-			err = writer.WriteInt32(y)
-			checkErr(err)
-		}
-	}
-}
-
-func checkErr(err error) {
-	if err != nil {
-		panic(err)
-	}
+	close(output)
 }
