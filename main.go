@@ -12,11 +12,10 @@ import (
 
 const (
 	Wpm  = 20.0      //words per minutes
-	Tone = 900       //frequency in Hertz
-	Sps  = 44100     //samples per seconds
+	Tone = 700       //frequency in Hertz
+	Sps  = 8000      //samples per seconds
 	Eps  = Wpm / 1.2 //elements per second (frequency of morse coding)
 	Bit  = 1.2 / Wpm //seconds per element (period of morse coding)
-
 )
 
 //directly compare byte for optimization
@@ -103,7 +102,7 @@ func main() {
 
 	data := translateFreqToData(freqSlice)
 
-	writeWave("morse.wav", 8000, data)
+	writeWave("morse.wav", Sps, data)
 }
 
 func translateRuneToMorse(input string) string {
