@@ -19,7 +19,6 @@ const (
 	Bit  = 1.2 / Wpm //seconds per element (period of morse coding)
 )
 
-//directly compare byte for optimization
 var m = map[string]string{
 	":":  "---...",
 	"?":  "..--..",
