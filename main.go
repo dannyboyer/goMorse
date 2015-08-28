@@ -8,12 +8,13 @@ import (
 	"math"
 	"os"
 	"strings"
+	"time"
 )
 
 const (
 	Wpm  = 20.0      //words per minutes
 	Tone = 700       //frequency in Hertz
-	Sps  = 8000      //samples per seconds
+	Sps  = 1000      //samples per seconds
 	Eps  = Wpm / 1.2 //elements per second (frequency of morse coding)
 	Bit  = 1.2 / Wpm //seconds per element (period of morse coding)
 )
@@ -93,16 +94,17 @@ func main() {
 	if err := scanner.Err(); err != nil {
 		log.Fatal(scanner.Err())
 	}
-
+	start := time.Now()
 	morseCode := translateRuneToMorse(message)
-	fmt.Println(morseCode)
+	go fmt.Println(morseCode)
 
 	freqSlice := translateMorseToFreq(morseCode)
-	fmt.Println(freqSlice)
 
 	data := translateFreqToData(freqSlice)
 
 	writeWave("morse.wav", Sps, data)
+	elapsed := time.Since(start)
+	fmt.Println(elapsed)
 }
 
 func translateRuneToMorse(input string) string {
