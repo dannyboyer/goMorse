@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	Wpm  = 20.0      //words per minutes
+	Wpm  = 15.0      //words per minutes
 	Tone = 700       //frequency in Hertz
 	Sps  = 1000      //samples per seconds
 	Eps  = Wpm / 1.2 //elements per second (frequency of morse coding)
@@ -72,7 +72,6 @@ var m = map[string]string{
 }
 
 func main() {
-
 	filename := os.Args[1]
 
 	inputFile, err := os.Open(filename)
@@ -135,12 +134,11 @@ func translateMorseToFreq(input string) []int {
 func translateFreqToData(input []int) []int16 {
 	var data []int16
 
-	ampl := 0.85 * 32767
-	pi := 3.1415926535
-	w := 2.0 * pi * Tone
+	ampl := 27851.95        // 0.85 * 32767 impulse amplitude
+	w := 6.283185307 * Tone // 2.0 * 3.1415926535(pi) * Tone, I am pretty sure this is an impulse width, as in 2πr
 	var i, n int32
 
-	n = int32(Bit * Sps)
+	n = int32(Bit * Sps) // this is the bitrate, e.g. 1000 bit/sec
 	for _, freq := range input {
 		for i = 0; i < n; i += 1 {
 			t := float64(i) / Sps
@@ -152,6 +150,7 @@ func translateFreqToData(input []int) []int16 {
 }
 
 func writeWave(fn string, sample_rate int, data []int16) {
+	//this could be done at the begining
 	file, err := os.OpenFile(fn, os.O_WRONLY|os.O_CREATE, 0666)
 	if err != nil {
 		log.Fatal("Error opening file for writing: %v\n", err)
@@ -190,6 +189,7 @@ func writeWave(fn string, sample_rate int, data []int16) {
 	bin.Write(file, bin.BigEndian, &header.Subchunk2ID)
 	bin.Write(file, bin.LittleEndian, &header.Subchunk2Size)
 
+	//this could be concurent
 	bin.Write(file, bin.LittleEndian, data)
 
 	file.Close()
