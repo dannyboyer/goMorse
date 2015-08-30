@@ -152,6 +152,4 @@ func writeWave(fn string, sample_rate int, data []int16) {
 	bin.Write(file, bin.LittleEndian, data)
 
 	file.Close()
-
-	return
 }
